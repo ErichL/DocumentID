@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Deduplicator App</title>
+</head>
+<body>
+
+    <div>
+        <div>
+            <label for="file">Choose file to upload</label>
+            <input type="file" id="file" name="file" multiple>
+        </div>
+        <div>
+            <button onclick="uploadFiles();">Submit</button>
+        </div>
+        <div>
+            <button onclick="getDocuments();">Get Documents</button>
+            <label for="Compare">Choose files to compare</label>
+            <select id="doc-one-dropdown" name="docOne">
+                <option disabled>Select a Document</option>
+            </select>
+            <select id="doc-two-dropdown" name="docTwo">
+                <option disabled>Select a Document</option>
+            </select>
+        </div>
+        <div>
+            <button onclick="compareDocuments();">Compare</button>
+        </div>
+        <div>
+            <h1>Similarity:</h1>
+            <p id="result"></p>
+        </div>
+    </div>
+
+    <script>
+        function uploadFiles() {
+            var formData = new FormData();
+            var documents = document.querySelector("input[type='file'][multiple]");
+            for (let i = 0; i < documents.files.length; i++) {
+                formData.append('file', documents.files[i]);
+            }
+
+            fetch('api/document', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(response => console.log(response))
+                .catch(error => console.error('Error:', error));
+        }
+        function getDocuments() {
+            fetch('api/document')
+                .then(response => response.json())
+                .then(response => {
+                    let option;
+                    Object.keys(response).map(key => {
+                        const doc = response[key];
+                        option = document.createElement('option');
+                        option.text = doc.Name;
+                        option.value = doc.ID;
+                        document.getElementById('doc-one-dropdown').add(option);
+                        document.getElementById('doc-two-dropdown').add(option.cloneNode(true));
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        function compareDocuments() {
+            const docOne = document.getElementById('doc-one-dropdown').value;
+            const docTwo = document.getElementById('doc-two-dropdown').value;
+            fetch(`api/document/${docOne}/${docTwo}`)
+                .then(response => response.json())
+                .then(response => {
+                    const resultDiv = document.getElementById('result');
+                    if (typeof response === "number") {
+                        resultDiv.textContent = response;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
